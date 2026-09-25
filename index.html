@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oẳn Tù Tì v2 (OTTv2) - Multiplayer Realtime</title>
+    <title>Oẳn Tù Tì v2 (OTTv2) - Offline & Online</title>
     
-    <!-- Nhúng thư viện playhtml.fun qua CDN -->
+    <!-- SDK đồng bộ mạng -->
     <script src="https://unpkg.com/playhtml@latest"></script>
 
     <style>
@@ -26,6 +26,33 @@
 
         h1 { margin-bottom: 5px; color: #333; }
         
+        /* Khung chọn Chế độ chơi */
+        .mode-selector {
+            background: #ffffff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .mode-btn {
+            border: none;
+            background: #eee;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #555;
+            transition: 0.2s;
+        }
+
+        .mode-btn.active {
+            background: #2c3e50;
+            color: white;
+        }
+
         .role-badge {
             background-color: #34495e;
             color: white;
@@ -121,31 +148,36 @@
 </head>
 <body>
 
-    <h1>Oẳn Tù Tì v2 (OTTv2) - Online</h1>
+    <h1>Oẳn Tù Tì v2 (OTTv2)</h1>
 
-    <!-- GIAO DIỆN QUẢN LÝ PHÒNG -->
-    <div id="roomContainer" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center;">
+    <!-- THANH CHỌN CHẾ ĐỘ CHƠI -->
+    <div class="mode-selector">
+        <button class="mode-btn active" id="btnModeOffline" onclick="switchGameMode('offline')">🎮 Chơi 2 người trên 1 máy</button>
+        <button class="mode-btn" id="btnModeOnline" onclick="switchGameMode('online')">🌐 Chơi Online (Mã phòng)</button>
+    </div>
+
+    <!-- GIAO DIỆN PHÒNG ONLINE (Mặc định ẩn khi ở chế độ 1 máy) -->
+    <div id="roomContainer" style="display: none; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center;">
         <div id="roomControls" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <button onclick="createRoom()" style="background-color: #2ecc71; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; cursor: pointer;">
-                ➕ Tạo phòng mới
+            <button onclick="createRoom()" style="background-color: #2ecc71; color: white; border: none; padding: 9px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                ➕ Tạo phòng
             </button>
             <span style="font-weight: bold; color: #777;">HOẶC</span>
-            <input type="text" id="roomCodeInput" placeholder="MÃ PHÒNG" maxlength="6" style="padding: 9px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; width: 130px; text-align: center;">
-            <button onclick="joinRoom()" style="background-color: #3498db; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+            <input type="text" id="roomCodeInput" placeholder="MÃ PHÒNG" maxlength="6" style="padding: 8px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; width: 110px; text-align: center;">
+            <button onclick="joinRoom()" style="background-color: #3498db; color: white; border: none; padding: 9px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;">
                 🚪 Vào phòng
             </button>
         </div>
 
         <div id="roomDisplay" style="display: none; margin-top: 10px;">
-            <p style="margin: 5px 0; font-size: 1.1rem; color: #2c3e50;">
-                Mã phòng của bạn: <b id="displayCode" style="font-size: 1.6rem; color: #e74c3c; letter-spacing: 2px;">======</b>
+            <p style="margin: 5px 0; font-size: 1rem; color: #2c3e50;">
+                Mã phòng: <b id="displayCode" style="font-size: 1.4rem; color: #e74c3c; letter-spacing: 2px;">======</b>
             </p>
-            <span style="font-size: 0.9rem; color: #7f8c8d;">Hãy gửi mã này cho bạn bè để vào chơi chung!</span>
         </div>
     </div>
 
-    <div class="role-badge" id="roleBadge">Chưa kết nối phòng</div>
-    <div class="status" id="status">Vui lòng tạo phòng hoặc nhập mã phòng để bắt đầu!</div>
+    <div class="role-badge" id="roleBadge">Chế độ: Chơi 2 người trên 1 máy</div>
+    <div class="status" id="status">Lượt của: Người chơi 1 (Đỏ)</div>
 
     <div class="game-container">
         <div class="board" id="board"></div>
@@ -155,7 +187,7 @@
             <p><strong>Cơ chế ăn:</strong> Búa ✊ > Kéo ✌️ > Bao ✋ > Búa ✊.</p>
             <p><strong>Cùng loại:</strong> Chặn đường nhau.</p>
             <p><strong>Thắng:</strong> Ăn sạch 1 loại quân hoặc chiếm ô đích (P1: <code>i9</code>, P2: <code>a1</code>).</p>
-            <button class="action-btn" onclick="resetGame(true)">Đặt lại bàn cờ</button>
+            <button class="action-btn" onclick="resetGame()">Ván mới / Đặt lại</button>
         </div>
     </div>
 
@@ -163,9 +195,9 @@
         const BOARD_SIZE = 9;
         const SYMBOLS = { 'R': '✊', 'P': '✋', 'S': '✌️' };
 
+        let gameMode = 'offline'; // 'offline' hoặc 'online'
         let playhtmlRoom = null;
-        let currentRoomCode = null;
-        let myRole = null; // 'p1', 'p2', hoặc 'spectator'
+        let myRole = 'p1'; // Ở chế độ offline, máy tính điều khiển cả p1 và p2
 
         let gameState = {
             board: Array(9).fill(null).map(() => Array(9).fill(null)),
@@ -174,16 +206,35 @@
             gameOver: false
         };
 
-        // --- 1. TẠO PHÒNG & KẾT NỐI REAL-TIME ---
+        // --- 1. CHUYỂN CHẾ ĐỘ CHƠI ---
+
+        function switchGameMode(mode) {
+            gameMode = mode;
+            document.getElementById('btnModeOffline').classList.toggle('active', mode === 'offline');
+            document.getElementById('btnModeOnline').classList.toggle('active', mode === 'online');
+
+            const roomContainer = document.getElementById('roomContainer');
+            
+            if (mode === 'offline') {
+                roomContainer.style.display = 'none';
+                document.getElementById('roleBadge').textContent = "Chế độ: Chơi 2 người trên 1 máy";
+                myRole = 'offline'; // Không giới hạn vai trò
+                resetGame();
+            } else {
+                roomContainer.style.display = 'block';
+                document.getElementById('roleBadge').textContent = "Chưa kết nối phòng Online";
+                myRole = null;
+                resetGame();
+            }
+        }
+
+        // --- 2. TẠO & VÀO PHÒNG ONLINE ---
 
         function createRoom() {
             const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            currentRoomCode = newCode;
-
             document.getElementById('displayCode').textContent = newCode;
             document.getElementById('roomDisplay').style.display = 'block';
-            document.getElementById('roleBadge').textContent = "Bạn là: Người chơi 1 (Đỏ - Chủ phòng)";
-            document.getElementById('status').textContent = "Đã tạo phòng! Đang chờ đối thủ nhập mã vào phòng...";
+            document.getElementById('roleBadge').textContent = "Online: Bạn là P1 (Đỏ - Chủ phòng)";
 
             connectPlayhtml(newCode, 'p1');
         }
@@ -191,16 +242,13 @@
         function joinRoom() {
             const inputCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
             if (!inputCode) {
-                alert("Vui lòng nhập mã phòng gồm 6 ký tự!");
+                alert("Vui lòng nhập mã phòng!");
                 return;
             }
 
-            currentRoomCode = inputCode;
-
             document.getElementById('displayCode').textContent = inputCode;
             document.getElementById('roomDisplay').style.display = 'block';
-            document.getElementById('roleBadge').textContent = "Bạn là: Người chơi 2 (Xanh)";
-            document.getElementById('status').textContent = "Đã vào phòng " + inputCode + ". Trận đấu bắt đầu!";
+            document.getElementById('roleBadge').textContent = "Online: Bạn là P2 (Xanh)";
 
             connectPlayhtml(inputCode, 'p2');
         }
@@ -209,7 +257,7 @@
             myRole = role;
 
             playhtmlRoom = playhtml.init({
-                room: "OTTV2_ROOM_" + roomId,
+                room: "OTTV2_DUAL_" + roomId,
                 onData: (data) => {
                     if (data) {
                         gameState = data;
@@ -218,19 +266,16 @@
                 }
             });
 
-            // Nếu là chủ phòng, khởi tạo bàn cờ ban đầu lên server
-            if (role === 'p1') {
-                syncData();
-            }
+            if (role === 'p1') syncData();
         }
 
         function syncData() {
-            if (playhtmlRoom) {
+            if (gameMode === 'online' && playhtmlRoom) {
                 playhtml.setState(gameState);
             }
         }
 
-        // --- 2. LOGIC GAME ---
+        // --- 3. LOGIC GAME & BÀN CỜ ---
 
         function initPieces() {
             gameState.board = Array(9).fill(null).map(() => Array(9).fill(null));
@@ -293,7 +338,8 @@
                 }
             }
 
-            if (gameState.selectedCell && myRole === gameState.turn) {
+            // Hiển thị gợi ý nước đi
+            if (gameState.selectedCell && (gameMode === 'offline' || myRole === gameState.turn)) {
                 const validMoves = getValidMoves(gameState.selectedCell.r, gameState.selectedCell.c);
                 validMoves.forEach(m => {
                     const cell = document.querySelector(`[data-row="${m.r}"][data-col="${m.c}"]`);
@@ -306,17 +352,18 @@
 
         function updateStatus() {
             const statusEl = document.getElementById('status');
-            if (!myRole) {
-                statusEl.textContent = "Vui lòng tạo phòng hoặc nhập mã phòng để bắt đầu!";
+            
+            if (gameMode === 'online' && !myRole) {
+                statusEl.textContent = "Vui lòng Tạo phòng hoặc Nhập mã phòng để bắt đầu!";
                 return;
             }
 
             if (gameState.gameOver) {
                 statusEl.textContent = "TRẬN ĐẤU KẾT THÚC!";
             } else {
-                const isMyTurn = gameState.turn === myRole;
                 const turnText = gameState.turn === 'p1' ? 'Người chơi 1 (Đỏ)' : 'Người chơi 2 (Xanh)';
-                statusEl.textContent = `Lượt của: ${turnText} ${isMyTurn ? '(ĐẾN LƯỢT BẠN)' : ''}`;
+                const isMyTurn = (gameMode === 'offline') || (gameState.turn === myRole);
+                statusEl.textContent = `Lượt của: ${turnText} ${isMyTurn ? '(ĐẾN LƯỢT TIẾP THEO)' : ''}`;
             }
         }
 
@@ -360,24 +407,22 @@
         function handleCellClick(r, c) {
             if (gameState.gameOver) return;
 
-            if (!myRole) {
-                alert("Bạn chưa kết nối vào phòng!");
-                return;
-            }
-            
-            if (gameState.turn !== myRole) {
-                alert("Chưa tới lượt của bạn!");
-                return;
+            // Chế độ Online kiểm tra quyền người chơi
+            if (gameMode === 'online') {
+                if (!myRole) { alert("Bạn chưa kết nối vào phòng!"); return; }
+                if (gameState.turn !== myRole) { alert("Chưa tới lượt của bạn!"); return; }
             }
 
             const currentPiece = gameState.board[r][c];
 
+            // Chọn quân
             if (currentPiece && currentPiece.player === gameState.turn) {
                 gameState.selectedCell = { r, c };
                 render();
                 return;
             }
 
+            // Di chuyển quân
             if (gameState.selectedCell) {
                 const validMoves = getValidMoves(gameState.selectedCell.r, gameState.selectedCell.c);
                 const isMoveValid = validMoves.some(m => m.r === r && m.c === c);
@@ -406,11 +451,11 @@
             const player = lastPiece.player;
 
             if (player === 'p1' && lastR === 8 && lastC === 8) {
-                alert("Người chơi 1 (Đỏ) chiến thắng do đã chiếm ô i9!");
+                alert("Người chơi 1 (Đỏ) chiến thắng!");
                 return true;
             }
             if (player === 'p2' && lastR === 0 && lastC === 0) {
-                alert("Người chơi 2 (Xanh) chiến thắng do đã chiếm ô a1!");
+                alert("Người chơi 2 (Xanh) chiến thắng!");
                 return true;
             }
 
@@ -420,14 +465,12 @@
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     const p = gameState.board[r][c];
-                    if (p && p.player === opponent) {
-                        oppCounts[p.type]++;
-                    }
+                    if (p && p.player === opponent) oppCounts[p.type]++;
                 }
             }
 
             if (oppCounts['R'] === 0 || oppCounts['P'] === 0 || oppCounts['S'] === 0) {
-                alert(`Người chơi ${player === 'p1' ? '1 (Đỏ)' : '2 (Xanh)'} thắng do diệt sạch 1 loại quân của đối phương!`);
+                alert(`Người chơi ${player === 'p1' ? '1 (Đỏ)' : '2 (Xanh)'} thắng do ăn sạch 1 loại quân của đối phương!`);
                 return true;
             }
 
@@ -443,7 +486,7 @@
             render();
         }
 
-        // Khởi chạy giao diện ban đầu
+        // Khởi tạo
         initPieces();
         createBoard();
     </script>
