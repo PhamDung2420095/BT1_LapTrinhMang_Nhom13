@@ -29,10 +29,11 @@
         .role-badge {
             background-color: #34495e;
             color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.9rem;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
             margin-bottom: 10px;
+            font-weight: bold;
         }
 
         .status { margin-bottom: 15px; font-weight: bold; font-size: 1.1rem; }
@@ -78,6 +79,7 @@
             position: absolute;
         }
         
+        /* Đánh dấu ô đích */
         .cell.target-p1 { border: 3px solid #e74c3c; box-sizing: border-box; }
         .cell.target-p2 { border: 3px solid #3498db; box-sizing: border-box; }
 
@@ -116,14 +118,51 @@
         }
 
         button:hover { background-color: #27ae60; }
-        .room-info { font-size: 0.85rem; word-break: break-all; color: #666; margin-top: 10px; }
+        .room-info { font-size: 0.9rem; word-break: break-all; color: #444; margin-top: 10px; line-height: 1.4; }
+
+        /* Giao diện tạo/nhập phòng */
+        .room-container {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .room-container input {
+            padding: 9px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-transform: uppercase;
+            width: 140px;
+            text-align: center;
+        }
+
+        .room-container button {
+            margin-top: 0;
+            width: auto;
+        }
     </style>
 </head>
 <body>
 
     <h1>Oẳn Tù Tì v2 (OTTv2) - Online</h1>
-    <div class="role-badge" id="roleBadge">Đang kết nối Server...</div>
-    <div class="status" id="status">Chờ đối thủ tham gia...</div>
+
+    <!-- Khung Tạo phòng / Nhập mã phòng -->
+    <div class="room-container" id="roomContainer">
+        <button onclick="createRoom()">Tạo phòng mới</button>
+        <span style="font-weight: bold; color: #777;">HOẶC</span>
+        <input type="text" id="roomCodeInput" placeholder="MÃ PHÒNG" maxlength="6">
+        <button onclick="joinRoom()" style="background-color: #3498db;">Vào phòng</button>
+    </div>
+
+    <div class="role-badge" id="roleBadge">Chưa kết nối phòng</div>
+    <div class="status" id="status">Vui lòng tạo phòng hoặc nhập mã phòng để chơi!</div>
 
     <div class="game-container">
         <div class="board" id="board"></div>
@@ -134,7 +173,7 @@
             <p><strong>Cùng loại:</strong> Chặn đường nhau.</p>
             <p><strong>Thắng:</strong> Ăn sạch 1 loại quân hoặc vào ô đích (P1: <code>i9</code>, P2: <code>a1</code>).</p>
             <button onclick="resetGame(true)">Chơi lại / Đặt lại bàn cờ</button>
-            <div class="room-info" id="roomLink">Link phòng: Đang tạo...</div>
+            <div class="room-info" id="roomLink">Trạng thái: Chưa vào phòng</div>
         </div>
     </div>
 
@@ -142,7 +181,6 @@
         const BOARD_SIZE = 9;
         const SYMBOLS = { 'R': '✊', 'P': '✋', 'S': '✌️' };
 
-        // Quản lý trạng thái Game & Mạng
         let myRole = null; // 'p1' hoặc 'p2'
         let playfullNet = null;
 
@@ -153,47 +191,60 @@
             gameOver: false
         };
 
-        // --- 1. TÍCH HỢP PLAYFULL.HTML SDK ---
-        function initPlayfull() {
-            // Lấy ID phòng từ URL Hash hoặc tạo phòng mới
-            let roomId = location.hash.substring(1);
-            if (!roomId) {
-                roomId = 'ottv2-' + Math.random().toString(36).substring(2, 8);
-                location.hash = roomId;
+        // --- 1. QUẢN LÝ PHÒNG & MẠNG (PLAYFULL SDK) ---
+
+        function createRoom() {
+            // Tạo mã phòng ngẫu nhiên 6 ký tự
+            const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            connectToRoom(newRoomId, true);
+        }
+
+        function joinRoom() {
+            const inputCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (!inputCode) {
+                alert("Vui lòng nhập mã phòng!");
+                return;
             }
+            connectToRoom(inputCode, false);
+        }
 
-            document.getElementById('roomLink').innerHTML = `Mời bạn bè bằng link:<br><b>${location.href}</b>`;
-
-            // Khởi tạo SDK Playfull
+        function connectToRoom(roomId, isCreating) {
             playfullNet = new Playfull({
                 roomId: roomId,
                 onConnect: (peerId, isHost) => {
-                    // Người tạo phòng là P1, người vào sau là P2
                     myRole = isHost ? 'p1' : 'p2';
-                    document.getElementById('roleBadge').textContent = 
-                        `Bạn là: ${myRole === 'p1' ? 'Người chơi 1 (Đỏ)' : 'Người chơi 2 (Xanh)'}`;
                     
+                    document.getElementById('roleBadge').textContent = 
+                        `Bạn là: ${myRole === 'p1' ? 'Người chơi 1 (Đỏ - Chủ phòng)' : 'Người chơi 2 (Xanh)'}`;
+                    
+                    document.getElementById('roomLink').innerHTML = 
+                        `Mã phòng của bạn: <b style="font-size: 1.2rem; color: #e74c3c;">${roomId}</b><br>` +
+                        (isHost ? `Gửi mã này cho đối thủ để cùng chơi!` : `Đã kết nối thành công vào phòng!`);
+
+                    // Ẩn khung nhập mã sau khi kết nối thành công
+                    document.getElementById('roomContainer').style.display = 'none';
+
                     if (!isHost) {
-                        // Báo cho Host biết có người tham gia
                         playfullNet.send({ type: 'JOINED' });
                     }
                     updateStatus();
                 },
                 onData: (data) => {
                     handleNetworkData(data);
+                },
+                onError: (err) => {
+                    alert("Không thể kết nối tới phòng. Vui lòng kiểm tra lại mã phòng!");
                 }
             });
         }
 
         function handleNetworkData(data) {
             if (data.type === 'MOVE') {
-                // Nhận nước đi từ đối thủ
                 applyMove(data.from.r, data.from.c, data.to.r, data.to.c);
             } else if (data.type === 'RESET') {
-                // Nhận lệnh reset game
                 resetGame(false);
             } else if (data.type === 'JOINED' && myRole === 'p1') {
-                // Đồng bộ lại bàn cờ cho người mới vào
+                // Đồng bộ lại trạng thái bàn cờ cho người chơi 2 mới vào
                 playfullNet.send({ type: 'SYNC_STATE', state: gameState });
             } else if (data.type === 'SYNC_STATE') {
                 gameState = data.state;
@@ -201,7 +252,8 @@
             }
         }
 
-        // --- 2. GAME LOGIC ---
+        // --- 2. LOGIC GAME ---
+
         function initPieces() {
             gameState.board = Array(9).fill(null).map(() => Array(9).fill(null));
             
@@ -275,6 +327,11 @@
 
         function updateStatus() {
             const statusEl = document.getElementById('status');
+            if (!myRole) {
+                statusEl.textContent = "Vui lòng tạo phòng hoặc nhập mã phòng để chơi!";
+                return;
+            }
+
             if (gameState.gameOver) {
                 statusEl.textContent = "TRẬN ĐẤU KẾT THÚC!";
             } else {
@@ -323,8 +380,12 @@
 
         function handleCellClick(r, c) {
             if (gameState.gameOver) return;
+
+            if (!myRole) {
+                alert("Bạn chưa kết nối vào phòng!");
+                return;
+            }
             
-            // CHỈ CHO PHÉP ĐI KHI ĐÚNG LƯỢT CỦA MÌNH
             if (gameState.turn !== myRole) {
                 alert("Chưa tới lượt của bạn!");
                 return;
@@ -345,10 +406,8 @@
                 if (isMoveValid) {
                     const from = gameState.selectedCell;
                     
-                    // Thực hiện nước đi cục bộ
                     applyMove(from.r, from.c, r, c);
 
-                    // Gửi nước đi sang cho đối thủ qua Playfull
                     if (playfullNet) {
                         playfullNet.send({
                             type: 'MOVE',
@@ -423,7 +482,6 @@
         // Khởi chạy
         initPieces();
         createBoard();
-        initPlayfull();
     </script>
 </body>
 </html>
