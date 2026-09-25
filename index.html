@@ -3,49 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oẳn Tù Tì v2 (OTTv2) - Offline & Online</title>
+    <title>Oẳn Tù Tì v2 (OTTv2) - Có Màn Hỉnh Xem Trực Tiếp</title>
     
     <!-- SDK đồng bộ mạng -->
     <script src="https://unpkg.com/playhtml@latest"></script>
 
     <style>
         :root {
-            --board-size: 9;
-            --cell-size: 55px;
+            --cell-main: 50px;
+            --cell-mini: 28px; /* Kích thước bàn cờ thu nhỏ */
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
+            margin: 0;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
         }
 
-        h1 { margin-bottom: 5px; color: #333; }
-        
-        /* Khung chọn Chế độ chơi */
-        .mode-selector {
-            background: #ffffff;
-            padding: 10px 20px;
-            border-radius: 30px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+        h1 { margin: 5px 0 15px 0; color: #333; }
+
+        /* Khung chứa tổng: Bàn cờ chính (Trái) + Khung Xem (Phải) */
+        .main-layout {
             display: flex;
-            gap: 15px;
+            gap: 25px;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* --- CỘT TRÁI: BÀN CỜ CHÍNH --- */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .mode-btn {
             border: none;
             background: #eee;
-            padding: 8px 18px;
+            padding: 8px 14px;
             border-radius: 20px;
             font-weight: bold;
             cursor: pointer;
             color: #555;
-            transition: 0.2s;
         }
 
         .mode-btn.active {
@@ -53,62 +68,104 @@
             color: white;
         }
 
-        .role-badge {
-            background-color: #34495e;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        .status { margin-bottom: 15px; font-weight: bold; font-size: 1.1rem; }
-
-        .game-container {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        .board {
+        .board-main {
             display: grid;
-            grid-template-columns: repeat(9, var(--cell-size));
-            grid-template-rows: repeat(9, var(--cell-size));
+            grid-template-columns: repeat(9, var(--cell-main));
+            grid-template-rows: repeat(9, var(--cell-main));
             gap: 2px;
             background-color: #8b5a2b;
             padding: 5px;
             border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
 
-        .cell {
-            width: var(--cell-size);
-            height: var(--cell-size);
+        .cell-main {
+            width: var(--cell-main);
+            height: var(--cell-main);
             background-color: #f0d9b5;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 22px;
             cursor: pointer;
             user-select: none;
             position: relative;
         }
 
-        .cell.dark { background-color: #b58863; }
-        .cell.selected { background-color: #7fc97f !important; }
-        .cell.valid-move::after {
+        .cell-main.dark { background-color: #b58863; }
+        .cell-main.selected { background-color: #7fc97f !important; }
+        .cell-main.valid-move::after {
             content: '';
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             background-color: rgba(0, 255, 0, 0.5);
             border-radius: 50%;
             position: absolute;
         }
-        
-        .cell.target-p1 { border: 3px solid #e74c3c; box-sizing: border-box; }
-        .cell.target-p2 { border: 3px solid #3498db; box-sizing: border-box; }
 
+        /* --- CỘT PHẢI: MÀN HÌNH XEM TRỰC TIẾP (MÀN HÌNH NHỎ) --- */
+        .right-column {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 280px;
+        }
+
+        .spectator-box {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .spectator-box input {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-transform: uppercase;
+            width: 120px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .spectator-box button {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+
+        .board-mini {
+            display: grid;
+            grid-template-columns: repeat(9, var(--cell-mini));
+            grid-template-rows: repeat(9, var(--cell-mini));
+            gap: 1px;
+            background-color: #555;
+            padding: 3px;
+            border-radius: 6px;
+            pointer-events: none; /* Khán giả không thể click vào bàn cờ nhỏ */
+        }
+
+        .cell-mini {
+            width: var(--cell-mini);
+            height: var(--cell-mini);
+            background-color: #f0d9b5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .cell-mini.dark { background-color: #b58863; }
+
+        /* Định dạng quân cờ chung */
         .piece {
             width: 80%;
             height: 80%;
@@ -117,77 +174,65 @@
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-
         .piece.p1 { background-color: #e74c3c; color: white; }
         .piece.p2 { background-color: #3498db; color: white; }
 
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            max-width: 260px;
-        }
-
-        button.action-btn {
-            background-color: #2ecc71;
+        .role-badge {
+            background-color: #34495e;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
             font-weight: bold;
-            margin-top: 10px;
         }
-
-        button.action-btn:hover { background-color: #27ae60; }
     </style>
 </head>
 <body>
 
     <h1>Oẳn Tù Tì v2 (OTTv2)</h1>
 
-    <!-- THANH CHỌN CHẾ ĐỘ CHƠI -->
-    <div class="mode-selector">
-        <button class="mode-btn active" id="btnModeOffline" onclick="switchGameMode('offline')">🎮 Chơi 2 người trên 1 máy</button>
-        <button class="mode-btn" id="btnModeOnline" onclick="switchGameMode('online')">🌐 Chơi Online (Mã phòng)</button>
-    </div>
+    <div class="main-layout">
+        <!-- CỘT TRÁI: MÀN HÌNH GAME CHÍNH -->
+        <div class="left-column">
+            <!-- Chuyển chế độ -->
+            <div class="mode-selector">
+                <button class="mode-btn active" id="btnModeOffline" onclick="switchGameMode('offline')">🎮 1 Máy</button>
+                <button class="mode-btn" id="btnModeOnline" onclick="switchGameMode('online')">🌐 Online</button>
+            </div>
 
-    <!-- GIAO DIỆN PHÒNG ONLINE (Mặc định ẩn khi ở chế độ 1 máy) -->
-    <div id="roomContainer" style="display: none; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center;">
-        <div id="roomControls" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <button onclick="createRoom()" style="background-color: #2ecc71; color: white; border: none; padding: 9px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;">
-                ➕ Tạo phòng
-            </button>
-            <span style="font-weight: bold; color: #777;">HOẶC</span>
-            <input type="text" id="roomCodeInput" placeholder="MÃ PHÒNG" maxlength="6" style="padding: 8px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; text-transform: uppercase; width: 110px; text-align: center;">
-            <button onclick="joinRoom()" style="background-color: #3498db; color: white; border: none; padding: 9px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;">
-                🚪 Vào phòng
-            </button>
+            <!-- Khung Online cho Game chính -->
+            <div id="mainRoomContainer" style="display: none; margin-bottom: 10px; text-align: center;">
+                <button onclick="createMainRoom()" style="background:#2ecc71; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">➕ Tạo phòng</button>
+                <input type="text" id="mainRoomInput" placeholder="MÃ PHÒNG" maxlength="6" style="padding:5px; width:90px; text-align:center; text-transform:uppercase;">
+                <button onclick="joinMainRoom()" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🚪 Vào</button>
+                <div id="mainCodeDisplay" style="margin-top:5px; font-weight:bold; color:#e74c3c;"></div>
+            </div>
+
+            <div class="role-badge" id="mainRoleBadge">Đang ở chế độ: Chơi 1 máy</div>
+            <div id="mainStatus" style="font-weight: bold; margin-bottom: 10px;">Lượt của: Người chơi 1 (Đỏ)</div>
+
+            <!-- Bàn cờ chính -->
+            <div class="board-main" id="boardMain"></div>
+
+            <button onclick="resetMainGame()" style="margin-top: 15px; background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer;">Ván mới</button>
         </div>
 
-        <div id="roomDisplay" style="display: none; margin-top: 10px;">
-            <p style="margin: 5px 0; font-size: 1rem; color: #2c3e50;">
-                Mã phòng: <b id="displayCode" style="font-size: 1.4rem; color: #e74c3c; letter-spacing: 2px;">======</b>
-            </p>
-        </div>
-    </div>
+        <!-- CỘT PHẢI: MÀN HÌNH XEM TRỰC TIẾP BÀN ĐẤU KHÁC -->
+        <div class="right-column">
+            <h3 style="margin-top:0; color:#d35400;">📺 Xem Trực Tiếp</h3>
+            <p style="font-size:0.85rem; color:#666; margin-top:-5px; text-align:center;">Nhập mã phòng trận đấu khác để xem live</p>
 
-    <div class="role-badge" id="roleBadge">Chế độ: Chơi 2 người trên 1 máy</div>
-    <div class="status" id="status">Lượt của: Người chơi 1 (Đỏ)</div>
+            <div class="spectator-box">
+                <input type="text" id="specRoomInput" placeholder="MÃ PHÒNG" maxlength="6">
+                <button onclick="startWatching()">👁️ Xem</button>
+            </div>
 
-    <div class="game-container">
-        <div class="board" id="board"></div>
+            <div class="role-badge" id="specStatus" style="background-color: #e67e22;">Chưa xem trận nào</div>
 
-        <div class="controls">
-            <h3>Luật chơi (12 quân/bên)</h3>
-            <p><strong>Cơ chế ăn:</strong> Búa ✊ > Kéo ✌️ > Bao ✋ > Búa ✊.</p>
-            <p><strong>Cùng loại:</strong> Chặn đường nhau.</p>
-            <p><strong>Thắng:</strong> Ăn sạch 1 loại quân hoặc chiếm ô đích (P1: <code>i9</code>, P2: <code>a1</code>).</p>
-            <button class="action-btn" onclick="resetGame()">Ván mới / Đặt lại</button>
+            <!-- Bàn cờ nhỏ (Mini Board) -->
+            <div class="board-mini" id="boardMini"></div>
         </div>
     </div>
 
@@ -195,300 +240,268 @@
         const BOARD_SIZE = 9;
         const SYMBOLS = { 'R': '✊', 'P': '✋', 'S': '✌️' };
 
-        let gameMode = 'offline'; // 'offline' hoặc 'online'
-        let playhtmlRoom = null;
-        let myRole = 'p1'; // Ở chế độ offline, máy tính điều khiển cả p1 và p2
-
-        let gameState = {
+        // --- DỮ LIỆU GAME CHÍNH (CỘT TRÁI) ---
+        let mainGameMode = 'offline';
+        let mainPlayhtml = null;
+        let mainRole = 'offline';
+        let mainState = {
             board: Array(9).fill(null).map(() => Array(9).fill(null)),
             turn: 'p1',
             selectedCell: null,
             gameOver: false
         };
 
-        // --- 1. CHUYỂN CHẾ ĐỘ CHƠI ---
+        // --- DỮ LIỆU XEM TRỰC TIẾP (CỘT PHẢI) ---
+        let specPlayhtml = null;
+        let specState = {
+            board: Array(9).fill(null).map(() => Array(9).fill(null))
+        };
+
+        // --- 1. QUẢN LÝ GAME CHÍNH ---
 
         function switchGameMode(mode) {
-            gameMode = mode;
+            mainGameMode = mode;
             document.getElementById('btnModeOffline').classList.toggle('active', mode === 'offline');
             document.getElementById('btnModeOnline').classList.toggle('active', mode === 'online');
 
-            const roomContainer = document.getElementById('roomContainer');
-            
+            const roomContainer = document.getElementById('mainRoomContainer');
             if (mode === 'offline') {
                 roomContainer.style.display = 'none';
-                document.getElementById('roleBadge').textContent = "Chế độ: Chơi 2 người trên 1 máy";
-                myRole = 'offline'; // Không giới hạn vai trò
-                resetGame();
+                document.getElementById('mainRoleBadge').textContent = "Đang ở chế độ: Chơi 1 máy";
+                mainRole = 'offline';
+                resetMainGame();
             } else {
                 roomContainer.style.display = 'block';
-                document.getElementById('roleBadge').textContent = "Chưa kết nối phòng Online";
-                myRole = null;
-                resetGame();
+                document.getElementById('mainRoleBadge').textContent = "Chưa kết nối phòng Online";
+                mainRole = null;
+                resetMainGame();
             }
         }
 
-        // --- 2. TẠO & VÀO PHÒNG ONLINE ---
-
-        function createRoom() {
-            const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            document.getElementById('displayCode').textContent = newCode;
-            document.getElementById('roomDisplay').style.display = 'block';
-            document.getElementById('roleBadge').textContent = "Online: Bạn là P1 (Đỏ - Chủ phòng)";
-
-            connectPlayhtml(newCode, 'p1');
+        function createMainRoom() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('mainCodeDisplay').textContent = "Mã phòng: " + code;
+            document.getElementById('mainRoleBadge').textContent = "Bạn là P1 (Đỏ - Chủ phòng)";
+            connectMainOnline(code, 'p1');
         }
 
-        function joinRoom() {
-            const inputCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            if (!inputCode) {
-                alert("Vui lòng nhập mã phòng!");
-                return;
-            }
-
-            document.getElementById('displayCode').textContent = inputCode;
-            document.getElementById('roomDisplay').style.display = 'block';
-            document.getElementById('roleBadge').textContent = "Online: Bạn là P2 (Xanh)";
-
-            connectPlayhtml(inputCode, 'p2');
+        function joinMainRoom() {
+            const code = document.getElementById('mainRoomInput').value.trim().toUpperCase();
+            if (!code) return alert("Vui lòng nhập mã phòng!");
+            document.getElementById('mainCodeDisplay').textContent = "Mã phòng: " + code;
+            document.getElementById('mainRoleBadge').textContent = "Bạn là P2 (Xanh)";
+            connectMainOnline(code, 'p2');
         }
 
-        function connectPlayhtml(roomId, role) {
-            myRole = role;
-
-            playhtmlRoom = playhtml.init({
-                room: "OTTV2_DUAL_" + roomId,
+        function connectMainOnline(code, role) {
+            mainRole = role;
+            mainPlayhtml = playhtml.init({
+                room: "OTTV2_ROOM_" + code,
                 onData: (data) => {
                     if (data) {
-                        gameState = data;
-                        render();
+                        mainState = data;
+                        renderMain();
                     }
                 }
             });
-
-            if (role === 'p1') syncData();
+            if (role === 'p1') syncMainData();
         }
 
-        function syncData() {
-            if (gameMode === 'online' && playhtmlRoom) {
-                playhtml.setState(gameState);
+        function syncMainData() {
+            if (mainGameMode === 'online' && mainPlayhtml) {
+                playhtml.setState(mainState);
             }
         }
 
-        // --- 3. LOGIC GAME & BÀN CỜ ---
+        // --- 2. QUẢN LÝ CỘT XEM TRỰC TIẾP (SPECTATOR) ---
 
-        function initPieces() {
-            gameState.board = Array(9).fill(null).map(() => Array(9).fill(null));
-            
-            // P1 (Đỏ) - 12 quân
-            const p1Row0 = ['R', 'S', 'P', 'R', 'S', 'P', 'R', 'S', 'P'];
-            for (let c = 0; c < 9; c++) gameState.board[0][c] = { player: 'p1', type: p1Row0[c] };
-            gameState.board[1][3] = { player: 'p1', type: 'R' };
-            gameState.board[1][4] = { player: 'p1', type: 'S' };
-            gameState.board[1][5] = { player: 'p1', type: 'P' };
+        function startWatching() {
+            const code = document.getElementById('specRoomInput').value.trim().toUpperCase();
+            if (!code) return alert("Nhập mã phòng muốn xem!");
 
-            // P2 (Xanh) - 12 quân
-            const p2Row8 = ['P', 'S', 'R', 'P', 'S', 'R', 'P', 'S', 'R'];
-            for (let c = 0; c < 9; c++) gameState.board[8][c] = { player: 'p2', type: p2Row8[c] };
-            gameState.board[7][3] = { player: 'p2', type: 'P' };
-            gameState.board[7][4] = { player: 'p2', type: 'S' };
-            gameState.board[7][5] = { player: 'p2', type: 'R' };
+            document.getElementById('specStatus').textContent = "Đang xem phòng: " + code;
+
+            // Kết nối vào cùng kênh dữ liệu của phòng đó để nhận biến biến bàn cờ
+            specPlayhtml = playhtml.init({
+                room: "OTTV2_ROOM_" + code,
+                onData: (data) => {
+                    if (data && data.board) {
+                        specState.board = data.board;
+                        renderMini();
+                    }
+                }
+            });
         }
 
-        function createBoard() {
-            const boardEl = document.getElementById('board');
-            boardEl.innerHTML = '';
+        // --- 3. KHỞI TẠO VÀ RENDER BÀN CỜ ---
 
+        function initPieces(boardObj) {
+            for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) boardObj[r][c] = null;
+            
+            const p1Row0 = ['R', 'S', 'P', 'R', 'S', 'P', 'R', 'S', 'P'];
+            for (let c = 0; c < 9; c++) boardObj[0][c] = { player: 'p1', type: p1Row0[c] };
+            boardObj[1][3] = { player: 'p1', type: 'R' };
+            boardObj[1][4] = { player: 'p1', type: 'S' };
+            boardObj[1][5] = { player: 'p1', type: 'P' };
+
+            const p2Row8 = ['P', 'S', 'R', 'P', 'S', 'R', 'P', 'S', 'R'];
+            for (let c = 0; c < 9; c++) boardObj[8][c] = { player: 'p2', type: p2Row8[c] };
+            boardObj[7][3] = { player: 'p2', type: 'P' };
+            boardObj[7][4] = { player: 'p2', type: 'S' };
+            boardObj[7][5] = { player: 'p2', type: 'R' };
+        }
+
+        function createBoards() {
+            // Khởi tạo khung bàn cờ chính
+            const boardMainEl = document.getElementById('boardMain');
+            boardMainEl.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     const cell = document.createElement('div');
-                    cell.className = `cell ${(r + c) % 2 === 1 ? 'dark' : ''}`;
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
-
-                    if (r === 8 && c === 8) cell.classList.add('target-p1'); 
-                    if (r === 0 && c === 0) cell.classList.add('target-p2'); 
-
-                    cell.addEventListener('click', () => handleCellClick(r, c));
-                    boardEl.appendChild(cell);
+                    cell.className = `cell-main ${(r + c) % 2 === 1 ? 'dark' : ''}`;
+                    cell.dataset.r = r; cell.dataset.c = c;
+                    cell.addEventListener('click', () => handleMainClick(r, c));
+                    boardMainEl.appendChild(cell);
                 }
             }
-            render();
-        }
 
-        function render() {
+            // Khởi tạo khung bàn cờ nhỏ
+            const boardMiniEl = document.getElementById('boardMini');
+            boardMiniEl.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
-                    const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                    const cell = document.createElement('div');
+                    cell.className = `cell-mini ${(r + c) % 2 === 1 ? 'dark' : ''}`;
+                    cell.id = `mini_${r}_${c}`;
+                    boardMiniEl.appendChild(cell);
+                }
+            }
+
+            renderMain();
+            renderMini();
+        }
+
+        // Vẽ bàn cờ chính
+        function renderMain() {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.querySelector(`.cell-main[data-r="${r}"][data-c="${c}"]`);
                     if (!cell) continue;
                     cell.innerHTML = '';
                     cell.classList.remove('selected', 'valid-move');
 
-                    const piece = gameState.board[r][c];
+                    const piece = mainState.board[r][c];
                     if (piece) {
-                        const pieceEl = document.createElement('div');
-                        pieceEl.className = `piece ${piece.player}`;
-                        pieceEl.textContent = SYMBOLS[piece.type];
-                        cell.appendChild(pieceEl);
+                        const pEl = document.createElement('div');
+                        pEl.className = `piece ${piece.player}`;
+                        pEl.textContent = SYMBOLS[piece.type];
+                        cell.appendChild(pEl);
                     }
 
-                    if (gameState.selectedCell && gameState.selectedCell.r === r && gameState.selectedCell.c === c) {
+                    if (mainState.selectedCell && mainState.selectedCell.r === r && mainState.selectedCell.c === c) {
                         cell.classList.add('selected');
                     }
                 }
             }
 
-            // Hiển thị gợi ý nước đi
-            if (gameState.selectedCell && (gameMode === 'offline' || myRole === gameState.turn)) {
-                const validMoves = getValidMoves(gameState.selectedCell.r, gameState.selectedCell.c);
-                validMoves.forEach(m => {
-                    const cell = document.querySelector(`[data-row="${m.r}"][data-col="${m.c}"]`);
+            if (mainState.selectedCell && (mainGameMode === 'offline' || mainRole === mainState.turn)) {
+                const moves = getValidMoves(mainState.board, mainState.selectedCell.r, mainState.selectedCell.c);
+                moves.forEach(m => {
+                    const cell = document.querySelector(`.cell-main[data-r="${m.r}"][data-c="${m.c}"]`);
                     if (cell) cell.classList.add('valid-move');
                 });
             }
 
-            updateStatus();
+            const statusEl = document.getElementById('mainStatus');
+            const turnText = mainState.turn === 'p1' ? 'Người chơi 1 (Đỏ)' : 'Người chơi 2 (Xanh)';
+            statusEl.textContent = mainState.gameOver ? "KẾT THÚC!" : `Lượt của: ${turnText}`;
         }
 
-        function updateStatus() {
-            const statusEl = document.getElementById('status');
-            
-            if (gameMode === 'online' && !myRole) {
-                statusEl.textContent = "Vui lòng Tạo phòng hoặc Nhập mã phòng để bắt đầu!";
-                return;
+        // Vẽ bàn cờ nhỏ
+        function renderMini() {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.getElementById(`mini_${r}_${c}`);
+                    if (!cell) continue;
+                    cell.innerHTML = '';
+
+                    const piece = specState.board[r][c];
+                    if (piece) {
+                        const pEl = document.createElement('div');
+                        pEl.className = `piece ${piece.player}`;
+                        pEl.textContent = SYMBOLS[piece.type];
+                        cell.appendChild(pEl);
+                    }
+                }
             }
-
-            if (gameState.gameOver) {
-                statusEl.textContent = "TRẬN ĐẤU KẾT THÚC!";
-            } else {
-                const turnText = gameState.turn === 'p1' ? 'Người chơi 1 (Đỏ)' : 'Người chơi 2 (Xanh)';
-                const isMyTurn = (gameMode === 'offline') || (gameState.turn === myRole);
-                statusEl.textContent = `Lượt của: ${turnText} ${isMyTurn ? '(ĐẾN LƯỢT TIẾP THEO)' : ''}`;
-            }
         }
 
-        function canEat(attackerType, defenderType) {
-            if (attackerType === defenderType) return false;
-            if (attackerType === 'R' && defenderType === 'S') return true;
-            if (attackerType === 'S' && defenderType === 'P') return true;
-            if (attackerType === 'P' && defenderType === 'R') return true;
-            return false;
+        // --- 4. LOGIC DI CHUYỂN BÀN CỜ CHÍNH ---
+
+        function canEat(a, b) {
+            return (a === 'R' && b === 'S') || (a === 'S' && b === 'P') || (a === 'P' && b === 'R');
         }
 
-        function getValidMoves(r, c) {
+        function getValidMoves(board, r, c) {
             const moves = [];
-            const piece = gameState.board[r][c];
+            const piece = board[r][c];
             if (!piece) return moves;
 
-            const directions = [
-                [-1,-1], [-1,0], [-1,1],
-                [0,-1],          [0,1],
-                [1,-1],  [1,0],  [1,1]
-            ];
-
-            for (let [dr, dc] of directions) {
-                const nr = r + dr;
-                const nc = c + dc;
-
-                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                    const target = gameState.board[nr][nc];
-                    if (!target) {
+            const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+            for (let [dr, dc] of dirs) {
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                    const target = board[nr][nc];
+                    if (!target || (target.player !== piece.player && canEat(piece.type, target.type))) {
                         moves.push({ r: nr, c: nc });
-                    } else if (target.player !== piece.player) {
-                        if (canEat(piece.type, target.type)) {
-                            moves.push({ r: nr, c: nc });
-                        }
                     }
                 }
             }
             return moves;
         }
 
-        function handleCellClick(r, c) {
-            if (gameState.gameOver) return;
-
-            // Chế độ Online kiểm tra quyền người chơi
-            if (gameMode === 'online') {
-                if (!myRole) { alert("Bạn chưa kết nối vào phòng!"); return; }
-                if (gameState.turn !== myRole) { alert("Chưa tới lượt của bạn!"); return; }
+        function handleMainClick(r, c) {
+            if (mainState.gameOver) return;
+            if (mainGameMode === 'online') {
+                if (!mainRole) return alert("Bạn chưa vào phòng!");
+                if (mainState.turn !== mainRole) return alert("Chưa tới lượt bạn!");
             }
 
-            const currentPiece = gameState.board[r][c];
-
-            // Chọn quân
-            if (currentPiece && currentPiece.player === gameState.turn) {
-                gameState.selectedCell = { r, c };
-                render();
+            const current = mainState.board[r][c];
+            if (current && current.player === mainState.turn) {
+                mainState.selectedCell = { r, c };
+                renderMain();
                 return;
             }
 
-            // Di chuyển quân
-            if (gameState.selectedCell) {
-                const validMoves = getValidMoves(gameState.selectedCell.r, gameState.selectedCell.c);
-                const isMoveValid = validMoves.some(m => m.r === r && m.c === c);
+            if (mainState.selectedCell) {
+                const moves = getValidMoves(mainState.board, mainState.selectedCell.r, mainState.selectedCell.c);
+                if (moves.some(m => m.r === r && m.c === c)) {
+                    const from = mainState.selectedCell;
+                    mainState.board[r][c] = mainState.board[from.r][from.c];
+                    mainState.board[from.r][from.c] = null;
+                    mainState.selectedCell = null;
+                    mainState.turn = mainState.turn === 'p1' ? 'p2' : 'p1';
 
-                if (isMoveValid) {
-                    const from = gameState.selectedCell;
-                    
-                    gameState.board[r][c] = gameState.board[from.r][from.c];
-                    gameState.board[from.r][from.c] = null;
-                    gameState.selectedCell = null;
-
-                    if (checkWin(r, c)) {
-                        gameState.gameOver = true;
-                    } else {
-                        gameState.turn = gameState.turn === 'p1' ? 'p2' : 'p1';
-                    }
-
-                    syncData();
-                    render();
+                    syncMainData();
+                    renderMain();
                 }
             }
         }
 
-        function checkWin(lastR, lastC) {
-            const lastPiece = gameState.board[lastR][lastC];
-            const player = lastPiece.player;
-
-            if (player === 'p1' && lastR === 8 && lastC === 8) {
-                alert("Người chơi 1 (Đỏ) chiến thắng!");
-                return true;
-            }
-            if (player === 'p2' && lastR === 0 && lastC === 0) {
-                alert("Người chơi 2 (Xanh) chiến thắng!");
-                return true;
-            }
-
-            const opponent = player === 'p1' ? 'p2' : 'p1';
-            const oppCounts = { 'R': 0, 'P': 0, 'S': 0 };
-
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    const p = gameState.board[r][c];
-                    if (p && p.player === opponent) oppCounts[p.type]++;
-                }
-            }
-
-            if (oppCounts['R'] === 0 || oppCounts['P'] === 0 || oppCounts['S'] === 0) {
-                alert(`Người chơi ${player === 'p1' ? '1 (Đỏ)' : '2 (Xanh)'} thắng do ăn sạch 1 loại quân của đối phương!`);
-                return true;
-            }
-
-            return false;
+        function resetMainGame() {
+            mainState.turn = 'p1';
+            mainState.selectedCell = null;
+            mainState.gameOver = false;
+            initPieces(mainState.board);
+            syncMainData();
+            renderMain();
         }
 
-        function resetGame() {
-            gameState.turn = 'p1';
-            gameState.selectedCell = null;
-            gameState.gameOver = false;
-            initPieces();
-            syncData();
-            render();
-        }
-
-        // Khởi tạo
-        initPieces();
-        createBoard();
+        // Khởi tạo ban đầu
+        initPieces(mainState.board);
+        initPieces(specState.board);
+        createBoards();
     </script>
 </body>
 </html>
